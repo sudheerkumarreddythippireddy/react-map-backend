@@ -16,7 +16,9 @@ app.use(cors({ origin: "http://localhost:3000", credentials: true }))
 
 //initialize DB and Server
 const path = require("path");
-const db = new Database(path.join(__dirname, "database.db"));
+const db = new Database(path.join(__dirname, "database.db"), { fileMustExist: false, readonly: false });
+
+
 
 console.log("Connected to DB");
 
