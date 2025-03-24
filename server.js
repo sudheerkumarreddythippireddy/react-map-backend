@@ -2,9 +2,6 @@ const express=require("express")
 const jwt=require("jsonwebtoken")
 const sqlite3=require("sqlite3")
 const cors=require("cors")  
-const Database = require('better-sqlite3');
-
-
 
 require("dotenv").config({ path: "./.env" });
 const app=express();
@@ -15,37 +12,46 @@ app.use(express.json())
 app.use(cors({ origin: "http://localhost:3000", credentials: true }))
 
 //initialize DB and Server
-const path = require("path");
-const db = new Database(path.join(__dirname, "database.db"), { fileMustExist: false, readonly: false });
-
-
-
-console.log("Connected to DB");
+const db=new sqlite3.Database("./database.db",(err)=>{
+  if(err){
+    console.log(err.message);
+  }else{
+    console.log("Connected to Database");
+  }
+});
 
 //Create user Table
-
-db.exec(`CREATE TABLE IF NOT EXISTS users(
+db.run(`CREATE TABLE IF NOT EXISTS users(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE,
     password TEXT
 )`);
-//Insert default user(sudheer,sudheer@123)
-db.prepare(`INSERT OR IGNORE INTO users(username,password) VALUES (?, ?)`)
-  .run("sudheer", "sudheer@123");
 
+
+//Insert default user(sudheer,sudheer@123)
+db.run(`INSERT OR IGNORE INTO users(username,password) VALUES (?, ?)`, ["sudheer", "sudheer@123"]);
 
 //Login APi
 app.post("/login", (req, res) => {
     const { username, password } = req.body;
+    
+    console.log("Received:", username, password); // Debugging
 
-    const user = db.prepare(`SELECT * FROM users WHERE username = ?`).get(username);
+    db.get("SELECT * FROM users WHERE username = ?", [username], (err, user) => {
+        if (err) {
+            console.error("DB Error:", err);
+            return res.status(500).json({ message: "Database Error" });
+        }
+        
+        console.log("Fetched User:", user); // Debugging
 
-    if (!user || user.password !== password) {
-        return res.status(401).json({ message: "Invalid Credentials" });
-    }
-
-    const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: "1d" });
-    res.json({ token });
+        if (!user || user.password.trim() !== password.trim()) {
+            return res.status(401).json({ message: "Invalid Credentials" });
+        }
+        
+        const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: "1d" });
+        res.json({ token });
+    });
 });
 
 
@@ -74,4 +80,4 @@ app.get("/map",verifyToken,(req,res)=>{
     res.json({message:'Map'});
 })
 
-app.listen(PORT,()=>console.log(`server running at port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running at port ${PORT}`));
