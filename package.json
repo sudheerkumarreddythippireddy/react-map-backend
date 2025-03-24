@@ -9,7 +9,8 @@
     "dunder-proto": "^1.0.1",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "sqlite3": "^5.1.6"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
