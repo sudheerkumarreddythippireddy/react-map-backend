@@ -15,40 +15,37 @@ app.use(express.json())
 app.use(cors({ origin: "http://localhost:3000", credentials: true }))
 
 //initialize DB and Server
-const db=new Database("/tmp/database.db",(err)=>{
-  if(err){
-    console.log(err.message);
-  }else{
-    console.log("Connected to Database");
-  }
-});
+const path = require("path");
+const db = new Database(path.join(__dirname, "database.db"));
+
+console.log("Connected to DB");
 
 //Create user Table
-db.run(`CREATE TABLE IF NOT EXISTS users(
+
+db.exec(`CREATE TABLE IF NOT EXISTS users(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE,
     password TEXT
 )`);
-
 //Insert default user(sudheer,sudheer@123)
-db.run(`INSERT OR IGNORE INTO users(username,password) VALUES ("sudheer","sudheer@123")`);
+db.prepare(`INSERT OR IGNORE INTO users(username,password) VALUES (?, ?)`)
+  .run("sudheer", "sudheer@123");
+
 
 //Login APi
-app.post("/login", (req,res)=>{
-    const {username,password}=req.body;
+app.post("/login", (req, res) => {
+    const { username, password } = req.body;
 
-    db.get(`select * from users where username= ?`,[username],(err,user)=>{
-        if(err){
-            console.error("DB Error:", err);
-            return res.status(500).json({message:"Database Error"})
-        }
-        if(!user || user.password!==password){
-            return res.status(401).json({message:"Invalid Credentials"})
-        }
-        const token=jwt.sign({username},SECRET_KEY,{expiresIn:"1d"});
-        res.json({token});
-    });
+    const user = db.prepare(`SELECT * FROM users WHERE username = ?`).get(username);
+
+    if (!user || user.password !== password) {
+        return res.status(401).json({ message: "Invalid Credentials" });
+    }
+
+    const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: "1d" });
+    res.json({ token });
 });
+
 
 //Middleware to verify jwt token
 const verifyToken=(req,res,next)=>{
