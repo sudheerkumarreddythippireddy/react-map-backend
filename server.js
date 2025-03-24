@@ -2,6 +2,9 @@ const express=require("express")
 const jwt=require("jsonwebtoken")
 const sqlite3=require("sqlite3")
 const cors=require("cors")  
+const Database = require('better-sqlite3');
+
+
 
 require("dotenv").config({ path: "./.env" });
 const app=express();
@@ -12,7 +15,7 @@ app.use(express.json())
 app.use(cors({ origin: "http://localhost:3000", credentials: true }))
 
 //initialize DB and Server
-const db=new sqlite3.Database("./database.db",(err)=>{
+const db=new Database("/tmp/database.db",(err)=>{
   if(err){
     console.log(err.message);
   }else{
