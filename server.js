@@ -9,7 +9,7 @@ const PORT=process.env.PORT || 5000;
 const SECRET_KEY = process.env.SECRET_KEY || "default_secret_key";
 
 app.use(express.json())
-app.use(cors({ origin: "http://localhost:3000", credentials: true }))
+app.use(cors({ origin: '*' }));
 
 //initialize DB and Server
 const db=new sqlite3.Database("./database.db",(err)=>{
